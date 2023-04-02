@@ -13,43 +13,38 @@
 # (26/01/2023)* First commit
 # (02/04/2023)* Modified rkhunter and samhain cronjob code for better readability 
 
-# Colors 
-# USAGE: echo -e "$COL_YELLOW\nLOREM IPSUM TEXTO\n$COL_RESET"
-# Reset
-	COL_RESET='\033[0m'       # Text Reset/
-	Black='\033[0;30m'        # Black
-	COL_RED='\033[0;31m'      # Red
-	COL_GREEN="\033[1;32m"    # Green
-	COL_YELLOW="\033[1;33m"   # Yellow
-	COL_MAGENTA="\033[1;35m"  # Purple - Magenta
-	COL_CYAN='\033[0;36m'     # Cyan
-	COL_BACKG_CYAN='\033[46m' # Cyan Background
-
+# Global Variables
+col_reset='\033[0m'
+col_red='\033[0;31m'
+col_green="\033[1;32m"
+col_yellow="\033[1;33m"
+col_magenta="\033[1;35m"
+col_cyan='\033[0;36m'
+col_backg_cyan='\033[46m'
 
 # Ensure root
-if [[ $(id -u) -ne 0 ]] ;
-	then
-		echo "Please run as root." ;
-	exit 1 ;
+if [[ $(id -u) -ne 0 ]]; then
+    printf "Please run as root.\n"
+    exit 1
 fi
 
 # PWD to working directory string
-W_DIR=$(pwd)
+working_dir=$(pwd)
 
-function load_1()
-{
-	echo -ne '⋮ \r'
-	sleep 0.3
-	echo -ne '⋮ ⋰ ⋯ ⋱ \r'
-	sleep 0.3
-	echo -ne '⋮ ⋰ ⋯ ⋱ ⋮ \r'
-	sleep 0.5
-	echo -ne '⋮ ⋰ ⋯ ⋱ ⋮ ✓\r'
-	echo -ne '\n'
+# Loading animation
+function load_animation() {
+    printf '⋮ \r'
+    sleep 0.3
+    printf '⋮ ⋰ ⋯ ⋱ \r'
+    sleep 0.3
+    printf '⋮ ⋰ ⋯ ⋱ ⋮ \r'
+    sleep 0.5
+    printf '⋮ ⋰ ⋯ ⋱ ⋮ ✓\r'
+    printf '\n'
 }
 
-function _spinner()
-{
+# Spinner
+function loading_spinner() {
     # $1 start/stop
     #
     # on start: $2 display message
@@ -68,7 +63,7 @@ function _spinner()
             # calculate the column where spinner and status msg will be displayed
             let column=$(tput cols)-${#2}-8
             # display message and position the cursor in $column column
-            echo -ne ${2}
+            printf "${2}"
             printf "%${column}s"
 
             # start spinner
@@ -76,8 +71,7 @@ function _spinner()
             sp='\|/-'
             delay=${SPINNER_DELAY:-0.15}
 
-            while :
-            do
+            while :; do
                 printf "\b${sp:i++%${#sp}:1}"
                 sleep $delay
             done
@@ -88,9 +82,9 @@ function _spinner()
                 exit 1
             fi
 
-            kill $3 > /dev/null 2>&1
+            kill $3 >/dev/null 2>&1
 
-            # inform the user uppon success or failure
+            # inform the user upon success or failure
             echo -en "\b["
             if [[ $2 -eq 0 ]]; then
                 echo -en "${green}${on_success}${nc}"
@@ -106,49 +100,100 @@ function _spinner()
     esac
 }
 
-function start_spinner()
-{
+function start_spinner() {
     # $1 : msg to display
-    _spinner "start" "${1}" &
+    loading_spinner "start" "${1}" &
     # set global spinner pid
-    _sp_pid=$!
+    sp_pid=$!
     disown
 }
 
-function stop_spinner()
-{
+function stop_spinner() {
     # $1 : command exit status
-    _spinner "stop" $1 $_sp_pid
-    unset _sp_pid
+    loading_spinner "stop" $1 $sp_pid
+    unset sp_pid
 }
 
-function KaliHardeningBasics()
-{
+# Advanced Security Hardening
+function advanced_security_hardening() {
 
-        echo -e $COL_GREEN "Setting up security basics..." $COL_RESET
-        load_1
+    printf "${col_green}Setting up advanced security hardening...${col_reset}\n"
+    load_animation
 
-        echo -e $COL_GREEN "Disabling SSH Root Access..." $COL_RESET
-            line="PermitRootLogin	no"
-            line2="Protocol	2"
-            filename="/etc/ssh/sshd_config"
-            echo $line >> $filename
-            echo $line2 >> $filename
+    printf "${col_green}Installing and configuring Samhain...${col_reset}\n"
+    apt-get install samhain -y # Install Samhain     
+    # The following adjustments for Samhain are optimized for VMWare and Kali Linux.
+    cp /etc/samhain/samhainrc /etc/samhain/samhainrc.local # Copy the default configuration file to a local file
+    sed -i 's/^# DBDIR.*/DBDIR \/var\/lib\/samhain/' /etc/samhain/samhainrc.local # Set the database directory
+    sed -i 's/^# LOGFILE.*/LOGFILE \/var\/log\/samhain.log/' /etc/samhain/samhainrc.local # Set the log file
+    sed -i 's/^# LOGMODE.*/LOGMODE 0640/' /etc/samhain/samhainrc.local # Set the log file permissions
+    sed -i 's/^# LOGFACILITY.*/LOGFACILITY local0/' /etc/samhain/samhainrc.local # Set the log facility
+    sed -i 's/^# SYSLOG.*/SYSLOG yes/' /etc/samhain/samhainrc.local # Enable syslog, in Kali Linux the default is disabled
+    sed -i 's/^# SYSLOG_FACILITY.*/SYSLOG_FACILITY local0/' /etc/samhain/samhainrc.local # Set the syslog facility
+    sed -i 's/^# SYSLOG_LEVEL.*/SYSLOG_LEVEL 5/' /etc/samhain/samhainrc.local # Set the syslog level, 5 is the default and the highest
+    
+    printf "${col_green}Installing and configuring Tripwire...${col_reset}\n"
+    apt-get install tripwire -y
+    # Configuring Tripwire 
+    cp /etc/tripwire/twpol.txt /etc/tripwire/twpol.txt.local # Copy the default configuration file to a local file
+    # sed -i 's/^# SITEKEY.*/SITEKEY 1234567890/' /etc/tripwire/twpol.txt.local # Set the site key, the site key is used to identify the site that Tripwire is monitoring
+    sed -i 's/^# LOCALHOST.*/LOCALHOST '${USER}'/' /etc/tripwire/twpol.txt.local # Set the local host name, the local host name is used to identify the host that Tripwire is monitoring     # Tripwire is for file integrity monitoring and also for detecting changes in the system.
+    
+    printf "${col_green}Installing and configuring Lynis...${col_reset}\n"
+    apt-get install lynis -y
+    # Lynis is a security auditing tool for Linux, macOS, and other UNIX-based systems.
 
-        echo -e $COL_GREEN "Restarting SSH Deamon. Should not exist at this point." $COL_RESET
-            systemctl restart ssh.service
+    # Secure user account settings
+    printf "${col_green}Securing user account settings...${col_reset}\n"
+    sed -i 's/^PASS_MAX_DAYS.*/PASS_MAX_DAYS   90/' /etc/login.defs # Set the maximum number of days a password may be used
+    sed -i 's/^PASS_MIN_DAYS.*/PASS_MIN_DAYS   7/' /etc/login.defs # Set the minimum number of days allowed between password changes
+    sed -i 's/^PASS_WARN_AGE.*/PASS_WARN_AGE   14/' /etc/login.defs # Set the number of days warning given before a password expires
 
-        echo -e $COL_GREEN "Removing the OpenSSH server package entirely..." $COL_RESET
-            apt remove openssh-server -y
+    # Configure log monitoring
+    printf "${col_green}Configuring log monitoring...${col_reset}\n"
+    apt-get install logwatch -y
+
+    echo "MailTo = deepmuscle@proton.me" > /etc/logwatch/conf/logwatch.conf # Set the email address to send the logwatch report to
+    echo "MailFrom = Logwatch" >> /etc/logwatch/conf/logwatch.conf # Set the email address to send the logwatch report from
+    echo "Range = yesterday" >> /etc/logwatch/conf/logwatch.conf # Set the range of the report to yesterday
+    echo "Detail = Medium" >> /etc/logwatch/conf/logwatch.conf # Set the detail level of the report to medium
+    echo "Service = All" >> /etc/logwatch/conf/logwatch.conf # Set the services to report on to all
+
+    # Add a cron job for logwatch to run daily
+    echo "0 1 * * * /usr/sbin/logwatch" > /etc/cron.d/logwatch
+
+
+    # Additional hardening steps can be added here as needed
+}
+
+# Kali Hardening Basics
+function kali_hardening_basics() {
+    printf "${col_green}Setting up security basics...${col_reset}\n"
+    load_animation
+
+    printf "${col_green}Disabling SSH Root Access...${col_reset}\n"
+    line="PermitRootLogin no"
+    line2="Protocol 2"
+    filename="/etc/ssh/sshd_config"
+    echo $line >>$filename
+    echo $line2 >>$filename
+
+
+    printf "${col_green}Restarting SSH Daemon. Should not exist at this point.${col_reset}\n"
+    systemctl restart ssh.service
+
+    printf "${col_green}Removing the OpenSSH server package entirely...${col_reset}\n"
+    apt remove openssh-server -y
+
         
-        echo -e $COL_GREEN "Setting up Rkhunter update and cronjob..." $COL_RESET
-        rkhunter --update
-        cp /etc/rkhunter.conf /etc/rkhunter.conf.local
-        filename="/etc/rkhunter.conf.local"
-        echo 'MAILON_WARNING="deepmuscle@proton.me"' >> $filename
-        echo 'MAIL_CMD=mail' >> $filename
-        
-        echo -e $COL_YELLOW "Creating cronjob script..." $COL_RESET
+    printf "${col_green}Setting up Rkhunter update and cron job...${col_reset}\n"
+    rkhunter --update
+    cp /etc/rkhunter.conf /etc/rkhunter.conf.local
+    filename="/etc/rkhunter.conf.local"
+    echo 'MAILON_WARNING="deepmuscle@proton.me"' >>$filename
+    echo 'MAIL_CMD=mail' >>$filename
+
+    printf "${col_yellow}Creating cron job script...${col_reset}\n"
 
 cat > rkhuntersh.sh << EOF
 #!/bin/bash
@@ -163,140 +208,186 @@ sudo rkhunter -c --enable all --rwo > /tmp/rkhunter.log
 cat /tmp/rkhunter.log | mail -s "Informe de escaneo Rkhunter $(date +%Y-%m-%d)" deepmuscle@proton.me
 EOF
 
-        chmod +x rkhuntersh.sh
+    chmod +x rkhuntersh.sh
+    line="0 0 * * * /home/$USER/rkhuntersh.sh"
+    touch /etc/cron.d/rkhuntercron
+    echo $line >> /etc/cron.d/rkhuntercron
+    printf "${col_magenta}"Seccessfully created cronjob for a everyday midnight scan with Rkhunter."${col_reset}\n"
+    printf "${col_green}Installing and configuring Samhain...${col_reset}\n"
+    wget https://www.la-samhna.de/samhain/samhain-current.tar.gz
+    tar -xzvf samhain-current.tar.gz
+    cd samhain-*
+    ./configure
+    make
+    make install
 
-        line="0 0 * * * /home/$USER/rkhuntersh.sh"
-        touch /etc/cron.d/rkhuntercron
-        echo $line >> /etc/cron.d/rkhuntercron
+    # Creating the cronjob
+    line="0 0 * * * /usr/local/sbin/samhain -c /usr/local/etc/samhain/samhainrc -t"
+    (crontab -u root -l; echo "$line" ) | crontab -u root -
+    printf "${col_magenta}"Seccessfully created cronjob for a everyday midnight scan with Samhain."${col_reset}\n"
 
-        echo -e $COL_MAGENTA "Seccessfully created cronjob for a everyday midnight scan." $COL_RESET
+    # Creating the config file
+    touch /usr/local/etc/samhain/samhainrc
+    echo "log_file = /var/log/samhain.log" >> /usr/local/etc/samhain/samhainrc # /var/log/samhain.log
+    echo "log_facility = local0" >> /usr/local/etc/samhain/samhainrc # local0, local1, local2, local3, local4, local5, local6, local7
+    echo "log_priority = info" >> /usr/local/etc/samhain/samhainrc # debug, info, notice, warning, err, crit, alert, emerg
+    echo "log_verbose = 1" >> /usr/local/etc/samhain/samhainrc # 0 = no verbose, 1 = verbose
 
-        echo -e $COL_GREEN "Setting up Samhain..." $COL_RESET
-        wget https://www.la-samhna.de/samhain/samhain-current.tar.gz
-        tar -xzvf samhain-current.tar.gz
-        cd samhain-*
-        ./configure
-        make
-        make install
+     # More security hardening functions
+    printf "${col_green}Setting up advanced security hardening...${col_reset}\n"
+    load_animation
 
-        # Creating the cronjob
-        line="0 0 * * * /usr/local/sbin/samhain -c /usr/local/etc/samhain/samhainrc -t"
-        (crontab -u root -l; echo "$line" ) | crontab -u root -
-       
-        echo -e $COL_MAGENTA "Seccessfully created cronjob for a everyday midnight scan with Samhain." $COL_RESET
+    # Disable unused filesystems
+    printf "${col_green}Disabling unused filesystems...${col_reset}\n"
+    echo "install cramfs /bin/true" > /etc/modprobe.d/unused_fs.conf
+    echo "install freevxfs /bin/true" >> /etc/modprobe.d/unused_fs.conf
+    echo "install jffs2 /bin/true" >> /etc/modprobe.d/unused_fs.conf
+    echo "install hfs /bin/true" >> /etc/modprobe.d/unused_fs.conf
+    echo "install hfsplus /bin/true" >> /etc/modprobe.d/unused_fs.conf
+    echo "install squashfs /bin/true" >> /etc/modprobe.d/unused_fs.conf
+    echo "install udf /bin/true" >> /etc/modprobe.d/unused_fs.conf
+    echo "install vfat /bin/true" >> /etc/modprobe.d/unused_fs.conf
 
+    # Disable uncommon network protocols
+    printf "${col_green}Disabling uncommon network protocols...${col_reset}\n"
+    echo "install dccp /bin/true" > /etc/modprobe.d/unused_net.conf
+    echo "install sctp /bin/true" >> /etc/modprobe.d/unused_net.conf
+    echo "install rds /bin/true" >> /etc/modprobe.d/unused_net.conf
+    echo "install tipc /bin/true" >> /etc/modprobe.d/unused_net.conf
+
+    # Restrict core dumps
+    printf "${col_green}Restricting core dumps...${col_reset}\n"
+    echo "fs.suid_dumpable = 0" > /etc/sysctl.d/50-security-hardening.conf
+    echo "kernel.core_uses_pid = 1" >> /etc/sysctl.d/50-security-hardening.conf
+    sysctl -p /etc/sysctl.d/50-security-hardening.conf
+
+    # Configure auditd
+    printf "${col_green}Configuring auditd...${col_reset}\n"
+    apt-get install auditd audispd-plugins -y
+    systemctl enable auditd
+    systemctl start auditd
+
+    # Additional hardening steps can be added here as needed
 
 }
 
 
-function install_p2()
-{
-
-    #Start spinner
+# Install packages and dependencies
+function install_dependencies() {
+    # Start spinner
     start_spinner
 
     # General requirements:
-	g_requirements=( "git" "nano" "zsh" "ohmyzsh" "open-vm-tools-desktop" "fuse" "powerlevel10k" "rkhunter" )
+    general_requirements=("git" "nano" "zsh" "open-vm-tools-desktop" "fuse" "powerlevel10k" "rkhunter")
 
-	# Iterates on every element at g_requirements array:
-	for pkg in "${g_requirements[@]}" ;
-		do
-            echo -e $COL_MAGENTA "Checking for "$pkg"." $COL_RESET
-			load_1
+    # You can modify the packages to install at the array above.
 
-            if [[ $pkg == "ohmyzsh" ]] || [[ $pkg == "powerlevel10k" ]]
-            then
-                if [[ $pkg == "ohmyzsh" ]] ;
-				then
-                    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-				fi
 
-				if [[ $pkg == "powerlevel10k" ]] ;
-				then
-                    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
-                    sed -i '/ZSH_THEME="robbyrussell"/c\ZSH_THEME="powerlevel10k/powerlevel10k"' ~/.zshrc
-				fi
+    # Iterates on every element in general_requirements array:
+    for pkg in "${general_requirements[@]}"; 
+        do
+
+        printf "${col_magenta}Checking for $pkg.${col_reset}\n"
+        load_animation
+        
+        if [[ $pkg == "ohmyzsh" ]] || [[ $pkg == "powerlevel10k" ]]; # If the package is ohmyzsh or powerlevel10k
+        then
+            if [[ $pkg == "ohmyzsh" ]]; then
+                sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
             fi
 
+            if [[ $pkg == "powerlevel10k" ]]; then
+                git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
+                sed -i '/ZSH_THEME="robbyrussell"/c\ZSH_THEME="powerlevel10k/powerlevel10k"' ~/.zshrc
+            fi
+        fi
+        printf "${col_cyan}Setting up $col_magenta$pkg.${col_reset}\n"
 
-			echo -e $COL_CYAN "Setting up $COL_MAGENTA"$pkg"." $COL_RESET
-			echo -e $COL_CYAN "Uninstalling previous versions of $COL_MAGENTA"$pkg"..." $COL_RESET
+        printf "${col_cyan}Uninstalling previous versions of $col_magenta$pkg...${col_reset}\n"
 
-			apt-get autoremove "$pkg" -y && apt-get --purge autoremove "$pkg" -y
+        # Uninstalling previous versions of the package
+        apt-get autoremove "$pkg" -y && apt-get --purge autoremove "$pkg" -y
 
-			echo -e $COL_CYAN "Installing $COL_MAGENTA"$pkg"..." $COL_RESET
-			load_1
+        # Installing the package
+        printf "${col_cyan}Installing $col_magenta$pkg...${col_reset}\n"
+        load_animation
+        apt-get install "$pkg" -y && apt install "$pkg" -y
 
-			apt-get install "$pkg" -y && apt install "$pkg" -y
+    done
 
-	done
- 
 # Executes Kali Hardening Basics func
-    KaliHardeningBasics
+    kali_hardening_basics
 
-	load_1
+    printf "${col_green}Basic hardening completed${col_reset}\n"
 
-	# Ending spinner and unseting INSTALLING to null.
-		stop_spinner $?
+    load_1
+# Execute Advanced Security Hardening
+    advanced_security_hardening 
+    # To ensure the highest level of security, regularly update your system, follow security best practices, and review and modify the hardening steps as needed for your specific environment.
+	
+    printf "${col_green}Advanced security hardening completed${col_reset}\n"
 
-		unset INSTALLING # Unset installing condition for while loop at install_p1
-	    echo -e $COL_GREEN "Install completed" $COL_RESET
-	exit 0
+    load_1
 
+    # Ending spinner and unsetting INSTALLING to null.
+    stop_spinner $?
+
+    unset INSTALLING # Unset installing condition for while loop at initial_package_install
+    printf "${col_green}Install completed${col_reset}\n"
+
+    printf "${col_green}To ensure the highest level of security, regularly update your system, follow security best practices, and review and modify the hardening steps as needed for your specific environment.${col_reset}\n"
+
+    exit 0
 }
-
 
 ## START
 
 # Display init messages
-	echo $OSTYPE
-	echo -e "$COL_YELLOW\nKali linux - Auto Installer for a first fresh install.\n$COL_RESET"
-    echo -e "$COL_YELLOW\nIncludes openvm and fuse configurations for shared folders and powerlevel10k prompt with ohmyzsh. Also cronjobs with rkhunter. Some basic security config included.\n$COL_RESET"
-    echo -e "$COL_MAGENTA\nVersion: v1.0 rev 0.\n$COL_RESET"
+echo $OSTYPE
+printf "${col_yellow}\nKali linux - Automated Configuration Script.\n${col_reset}"
+printf "${col_yellow}\nThis script will install and configure some basic packages and hardening steps for Kali Linux.\n${col_reset}"
+printf "${col_yellow}\nIncludes openvm and fuse configurations for shared folders and powerlevel10k prompt with ohmyzsh. Also cronjobs with rkhunter. Some basic security config included.\n${col_reset}"
+printf "${col_magenta}\nVersion: v1.0 rev 1.\n${col_reset}"
 
-function install_p1()
-{
-	load_1
-	# Upgrade system packages
-		echo -e $COL_MAGENTA "Do you want to upgrade your system's packages? [Y]es or [N]o" $COL_RESET
-		
-			read ans_1
-		
-	case $ans_1 in
-			[Yy]* ) echo -e $COL_GREEN "Upgrading system packages..." $COL_RESET
-			load_1
+function initial_package_install() {
+    load_animation
+    # Upgrade system packages
+    printf "${col_magenta}Do you want to upgrade your system's packages? [Y]es or [N]o${col_reset}\n"
 
-            echo -e $COL_MAGENTA "Enabling the kali-rolling branch..." $COL_RESET
+    read ans_1
+
+    case $ans_1 in
+        [Yy]*)
+            printf "${col_green}Upgrading system packages...${col_reset}\n"
+            load_animation
+
+            # Kali Linux repositories
             echo "deb http://http.kali.org/kali kali-rolling main contrib non-free" | sudo tee /etc/apt/sources.list
-			
-            echo -e $COL_MAGENTA "Enabling the kali-last-snapshot branch..." $COL_RESET
             echo "deb http://http.kali.org/kali kali-last-snapshot main contrib non-free" | sudo tee /etc/apt/sources.list
+            printf "${col_yellow}Installing linux-headers...${col_reset}\n"
+            apt-get install -y linux-headers-$(uname -r) # Install linux headers
 
-            echo -e $COL_YELLOW "Installing linux-headers..." $COL_RESET
-            apt-get install -y linux-headers-$(uname -r)
-
-
-            apt update -y && apt full-upgrade -y && apt-get update -y
-
+            apt update -y && apt full-upgrade -y && apt-get update -y # Update and upgrade system packages
             apt-get upgrade -y && apt dist-upgrade -y
 
-                #While loop for installing var
-                INSTALLING="1"
+            # While loop for installing var
+            INSTALLING="1" # Set installing condition for while loop at install_dependencies
 
-	            while [[ -n $INSTALLING ]] ;
-	            	do
-	            		start_spinner
-	            		echo -e $COL_GREEN "Starting install..." $COL_RESET
-	            		install_p2
-	            	done
-		;;
-			[Nn]* )  echo -e $COL_GREEN "Skipping..." $COL_RESET
-			load_1
-		;;
-			*) echo "Try again. Options: [Y] for yes. or [N] for no."
-		;;
-	esac
+            while [[ -n $INSTALLING ]]; 
+            do
+                start_spinner
+                printf "${col_green}Starting install...${col_reset}\n"
+                install_dependencies
+            done
+            ;;
+        [Nn]*)
+            printf "${col_green}Skipping...${col_reset}\n"
+            load_animation
+            ;;
+        *)
+            echo "Try again. Options: [Y] for yes. or [N] for no."
+            ;;
+    esac
 }
 
-install_p1
-
+initial_package_install

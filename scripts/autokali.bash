@@ -198,13 +198,13 @@ function kali_hardening_basics() {
 cat > rkhuntersh.sh << EOF
 #!/bin/bash
 
-# Actualizar la base de datos de Rkhunter
+# Rkhunter db update
 sudo rkhunter --update -y
 
-# Ejecutar un escaneo completo
+# Perform a full scan
 sudo rkhunter -c --enable all --rwo > /tmp/rkhunter.log
 
-# Enviar el informe por correo
+# Send the results
 cat /tmp/rkhunter.log | mail -s "Informe de escaneo Rkhunter $(date +%Y-%m-%d)" deepmuscle@proton.me
 EOF
 

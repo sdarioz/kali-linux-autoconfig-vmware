@@ -17,6 +17,8 @@
   - Configuring auditd for system auditing.
   - Secure user account settings.
   - Configuring log monitoring with Logwatch.
+  - Installing and configuring Tripwire for file integrity monitoring.
+  - Installing and running Lynis for system hardening and vulnerability assessments.
 - 💡 Provides an easy-to-use script with a progress spinner and clear output messages.
 
 ## 📋 Prerequisites

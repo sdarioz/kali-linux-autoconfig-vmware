@@ -382,7 +382,15 @@ function initial_package_install() {
             ;;
         [Nn]*)
             printf "${col_green}Skipping...${col_reset}\n"
-            load_animation
+            # While loop for installing var
+            INSTALLING="1" # Set installing condition for while loop at install_dependencies
+
+            while [[ -n $INSTALLING ]]; 
+            do
+                start_spinner
+                printf "${col_green}Starting install...${col_reset}\n"
+                install_dependencies
+            done
             ;;
         *)
             echo "Try again. Options: [Y] for yes. or [N] for no."

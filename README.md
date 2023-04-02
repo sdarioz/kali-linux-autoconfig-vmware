@@ -44,10 +44,10 @@
    chmod +x autokali.sh
    ```
 
-4. Run the script as root:
+4. Run the script as root with bash:
 
    ```
-   sudo ./autokali.sh
+   sudo bash autokali.sh
    ```
 
 5. Follow the prompts and let the script complete the configuration and hardening process.

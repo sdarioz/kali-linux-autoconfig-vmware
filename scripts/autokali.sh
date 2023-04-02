@@ -320,14 +320,14 @@ function install_dependencies() {
 
     printf "${col_green}Basic hardening completed${col_reset}\n"
 
-    load_1
+    load_animation
 # Execute Advanced Security Hardening
     advanced_security_hardening 
     # To ensure the highest level of security, regularly update your system, follow security best practices, and review and modify the hardening steps as needed for your specific environment.
 	
     printf "${col_green}Advanced security hardening completed${col_reset}\n"
 
-    load_1
+    load_animation
 
     # Ending spinner and unsetting INSTALLING to null.
     stop_spinner $?

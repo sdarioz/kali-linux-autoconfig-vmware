@@ -100,6 +100,7 @@ function loading_spinner() {
     esac
 }
 
+# shellcheck disable=SC2120
 function start_spinner() {
     # $1 : msg to display
     loading_spinner "start" "${1}" &
@@ -121,43 +122,92 @@ function advanced_security_hardening() {
     load_animation
 
     printf "${col_green}Installing and configuring Samhain...${col_reset}\n"
-    apt-get install samhain -y # Install Samhain     
+
+
+    # Install Samhain
+    apt-get install samhain -y
+
     # The following adjustments for Samhain are optimized for VMWare and Kali Linux.
-    cp /etc/samhain/samhainrc /etc/samhain/samhainrc.local # Copy the default configuration file to a local file
-    sed -i 's/^# DBDIR.*/DBDIR \/var\/lib\/samhain/' /etc/samhain/samhainrc.local # Set the database directory
-    sed -i 's/^# LOGFILE.*/LOGFILE \/var\/log\/samhain.log/' /etc/samhain/samhainrc.local # Set the log file
-    sed -i 's/^# LOGMODE.*/LOGMODE 0640/' /etc/samhain/samhainrc.local # Set the log file permissions
-    sed -i 's/^# LOGFACILITY.*/LOGFACILITY local0/' /etc/samhain/samhainrc.local # Set the log facility
-    sed -i 's/^# SYSLOG.*/SYSLOG yes/' /etc/samhain/samhainrc.local # Enable syslog, in Kali Linux the default is disabled
-    sed -i 's/^# SYSLOG_FACILITY.*/SYSLOG_FACILITY local0/' /etc/samhain/samhainrc.local # Set the syslog facility
-    sed -i 's/^# SYSLOG_LEVEL.*/SYSLOG_LEVEL 5/' /etc/samhain/samhainrc.local # Set the syslog level, 5 is the default and the highest
-    
+
+    # Copy the default configuration file to a local file
+    cp /etc/samhain/samhainrc /etc/samhain/samhainrc.local
+
+    # Set the database directory
+    sed -i 's/^# DBDIR.*/DBDIR \/var\/lib\/samhain/' /etc/samhain/samhainrc.local
+
+    # Set the log file
+    sed -i 's/^# LOGFILE.*/LOGFILE \/var\/log\/samhain.log/' /etc/samhain/samhainrc.local
+
+    # Set the log file permissions
+    sed -i 's/^# LOGMODE.*/LOGMODE 0640/' /etc/samhain/samhainrc.local
+
+    # Set the log facility
+    sed -i 's/^# LOGFACILITY.*/LOGFACILITY local0/' /etc/samhain/samhainrc.local
+
+    # Enable syslog, in Kali Linux the default is disabled
+    sed -i 's/^# SYSLOG.*/SYSLOG yes/' /etc/samhain/samhainrc.local
+
+    # Set the syslog facility
+    sed -i 's/^# SYSLOG_FACILITY.*/SYSLOG_FACILITY local0/' /etc/samhain/samhainrc.local
+
+    # Set the syslog level, 5 is the default and the highest
+    sed -i 's/^# SYSLOG_LEVEL.*/SYSLOG_LEVEL 5/' /etc/samhain/samhainrc.local
+
+    # Tripwire
     printf "${col_green}Installing and configuring Tripwire...${col_reset}\n"
     apt-get install tripwire -y
-    # Configuring Tripwire 
-    cp /etc/tripwire/twpol.txt /etc/tripwire/twpol.txt.local # Copy the default configuration file to a local file
-    # sed -i 's/^# SITEKEY.*/SITEKEY 1234567890/' /etc/tripwire/twpol.txt.local # Set the site key, the site key is used to identify the site that Tripwire is monitoring
-    sed -i 's/^# LOCALHOST.*/LOCALHOST '${USER}'/' /etc/tripwire/twpol.txt.local # Set the local host name, the local host name is used to identify the host that Tripwire is monitoring     # Tripwire is for file integrity monitoring and also for detecting changes in the system.
-    
+
+    # Configuring Tripwire
+
+    # Copy the default configuration file to a local file
+    cp /etc/tripwire/twpol.txt /etc/tripwire/twpol.txt.local
+
+    # Set the site key, the site key is used to identify the site that Tripwire is monitoring
+    # sed -i 's/^# SITEKEY.*/SITEKEY 1234567890/' /etc/tripwire/twpol.txt.local
+
+    # Set the local host name, the local host name is used to identify the host that Tripwire is monitoring
+    sed -i 's/^# LOCALHOST.*/LOCALHOST '${USER}'/' /etc/tripwire/twpol.txt.local
+
+    # Tripwire is for file integrity monitoring and also for detecting changes in the system.
+
+    # Lynis
     printf "${col_green}Installing and configuring Lynis...${col_reset}\n"
     apt-get install lynis -y
-    # Lynis is a security auditing tool for Linux, macOS, and other UNIX-based systems.
+
 
     # Secure user account settings
     printf "${col_green}Securing user account settings...${col_reset}\n"
-    sed -i 's/^PASS_MAX_DAYS.*/PASS_MAX_DAYS   90/' /etc/login.defs # Set the maximum number of days a password may be used
-    sed -i 's/^PASS_MIN_DAYS.*/PASS_MIN_DAYS   7/' /etc/login.defs # Set the minimum number of days allowed between password changes
-    sed -i 's/^PASS_WARN_AGE.*/PASS_WARN_AGE   14/' /etc/login.defs # Set the number of days warning given before a password expires
 
-    # Configure log monitoring
+    # Set the maximum number of days a password may be used
+    sed -i 's/^PASS_MAX_DAYS.*/PASS_MAX_DAYS   90/' /etc/login.defs
+
+    # Set the minimum number of days allowed between password changes
+    sed -i 's/^PASS_MIN_DAYS.*/PASS_MIN_DAYS   7/' /etc/login.defs
+
+    # Set the number of days warning given before a password expires
+    sed -i 's/^PASS_WARN_AGE.*/PASS_WARN_AGE   14/' /etc/login.defs
+
+
+    # Configure log monitoring with logwatch
     printf "${col_green}Configuring log monitoring...${col_reset}\n"
     apt-get install logwatch -y
 
-    echo "MailTo = deepmuscle@proton.me" > /etc/logwatch/conf/logwatch.conf # Set the email address to send the logwatch report to
-    echo "MailFrom = Logwatch" >> /etc/logwatch/conf/logwatch.conf # Set the email address to send the logwatch report from
-    echo "Range = yesterday" >> /etc/logwatch/conf/logwatch.conf # Set the range of the report to yesterday
-    echo "Detail = Medium" >> /etc/logwatch/conf/logwatch.conf # Set the detail level of the report to medium
-    echo "Service = All" >> /etc/logwatch/conf/logwatch.conf # Set the services to report on to all
+    # Configure logwatch
+
+    # Set the email address to send the logwatch report to
+    echo "MailTo = deepmuscle@proton.me" > /etc/logwatch/conf/logwatch.conf
+
+    # Set the email address to send the logwatch report from
+    echo "MailFrom = Logwatch" >> /etc/logwatch/conf/logwatch.conf
+
+    # Set the range of the report to yesterday
+    echo "Range = yesterday" >> /etc/logwatch/conf/logwatch.conf
+
+     # Set the detail level of the report to medium
+    echo "Detail = Medium" >> /etc/logwatch/conf/logwatch.conf
+
+    # Set the services to report on to all
+    echo "Service = All" >> /etc/logwatch/conf/logwatch.conf
 
     # Add a cron job for logwatch to run daily
     echo "0 1 * * * /usr/sbin/logwatch" > /etc/cron.d/logwatch
@@ -208,12 +258,17 @@ sudo rkhunter -c --enable all --rwo > /tmp/rkhunter.log
 cat /tmp/rkhunter.log | mail -s "Informe de escaneo Rkhunter $(date +%Y-%m-%d)" deepmuscle@proton.me
 EOF
 
+    # Make the script executable
     chmod +x rkhuntersh.sh
+
+    # Create the cronjob
     line="0 0 * * * /home/$USER/rkhuntersh.sh"
     touch /etc/cron.d/rkhuntercron
     echo $line >> /etc/cron.d/rkhuntercron
     printf "${col_magenta}"Seccessfully created cronjob for a everyday midnight scan with Rkhunter."${col_reset}\n"
-    printf "${col_green}Installing and configuring Samhain...${col_reset}\n"
+
+    # Ensuring samhain is installed
+    printf "${col_green}Ensuring Samhain...${col_reset}\n"
     wget https://www.la-samhna.de/samhain/samhain-current.tar.gz
     tar -xzvf samhain-current.tar.gz
     cd samhain-*
@@ -221,7 +276,7 @@ EOF
     make
     make install
 
-    # Creating the cronjob
+    # Creating the cronjob for Samhain
     line="0 0 * * * /usr/local/sbin/samhain -c /usr/local/etc/samhain/samhainrc -t"
     (crontab -u root -l; echo "$line" ) | crontab -u root -
     printf "${col_magenta}"Seccessfully created cronjob for a everyday midnight scan with Samhain."${col_reset}\n"

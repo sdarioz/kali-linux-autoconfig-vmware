@@ -49,7 +49,7 @@
 4. Run the script as root with bash:
 
    ```
-   sudo bash autokali.sh
+   sudo bash autokali.bash
    ```
 
 5. Follow the prompts and let the script complete the configuration and hardening process.

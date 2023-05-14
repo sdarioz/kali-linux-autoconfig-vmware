@@ -333,7 +333,7 @@ function install_dependencies() {
     start_spinner
 
     # General requirements:
-    general_requirements=("git" "nano" "zsh" "open-vm-tools-desktop" "fuse" "powerlevel10k" "rkhunter")
+    general_requirements=("git" "nano" "zsh" "open-vm-tools" "open-vm-tools-desktop" "fuse" "powerlevel10k" "rkhunter")
 
     # You can modify the packages to install at the array above.
 

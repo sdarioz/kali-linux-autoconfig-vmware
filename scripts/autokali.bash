@@ -333,10 +333,34 @@ function install_dependencies() {
     start_spinner
 
     # General requirements:
-    general_requirements=("git" "nano" "zsh" "open-vm-tools" "open-vm-tools-desktop" "fuse" "powerlevel10k" "rkhunter")
+    general_requirements=("nano" "fuse" "rkhunter")
+    openvmpkgs=("open-vm-tools" "open-vm-tools-desktop")
+    shellpkg=("ohmyzsh" "zsh")
 
     # You can modify the packages to install at the array above.
 
+    # Iterates on every element in shellpkg array:
+    for spkg in "${shellpkg[@]}";
+    do
+    	mkfifo ohmyexit
+	
+    	printf "${col_cyan}Setting up Shell config $col_magenta$ppkg.${col_reset}\n"	
+	apt remove zsh -y
+	apt install zsh -y
+		
+            if [[ $spkg == "ohmyzsh" ]]; 
+	    then
+	    	printf "${col_cyan}Removing /root/.oh-my-zsh/ $col_magenta$ppkg.${col_reset}\n"
+			rm -rf /root/.oh-my-zsh/
+	    		apt install git -y
+     			# Run the following command in the background to send "exit" to the named pipe after a delay
+        		(sleep 10; echo "exit" > ohmyexit) &
+       			# Start a subshell with the input redirected from the named pipe and run the install script
+        		bash -i < ohmyexit | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+	       		# Remove FIFO
+        		rm ohmyexit
+    	    fi
+    done
 
     # Iterates on every element in general_requirements array:
     for pkg in "${general_requirements[@]}"; 
@@ -344,30 +368,29 @@ function install_dependencies() {
 
         printf "${col_magenta}Checking for $pkg.${col_reset}\n"
         load_animation
-        
-        if [[ $pkg == "ohmyzsh" ]] || [[ $pkg == "powerlevel10k" ]]; # If the package is ohmyzsh or powerlevel10k
-        then
-            if [[ $pkg == "ohmyzsh" ]]; then
-                sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-            fi
 
-            if [[ $pkg == "powerlevel10k" ]]; then
-                git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
-                sed -i '/ZSH_THEME="robbyrussell"/c\ZSH_THEME="powerlevel10k/powerlevel10k"' ~/.zshrc
-            fi
-        fi
         printf "${col_cyan}Setting up $col_magenta$pkg.${col_reset}\n"
 
         printf "${col_cyan}Uninstalling previous versions of $col_magenta$pkg...${col_reset}\n"
 
         # Uninstalling previous versions of the package
         apt-get autoremove "$pkg" -y && apt-get --purge autoremove "$pkg" -y
-
+	apt remove "$pkg" -y
+	
         # Installing the package
         printf "${col_cyan}Installing $col_magenta$pkg...${col_reset}\n"
         load_animation
         apt-get install "$pkg" -y && apt install "$pkg" -y
-
+	
+	# Iterates on every element in openvmpkgs array:
+    	for ppkg in "${openvmpkgs[@]}";
+    	do
+    		printf "${col_cyan}Setting up $col_magenta$ppkg.${col_reset}\n"
+		apt remove "$ppkg" -y
+		apt install "$ppkg" -y
+    	done
+		git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "/root/.oh-my-zsh/custom/themes/powerlevel10k"
+		sed -i '/ZSH_THEME="robbyrussell"/c\ZSH_THEME="powerlevel10k/powerlevel10k"' ~/.zshrc
     done
 
 # Executes Kali Hardening Basics func

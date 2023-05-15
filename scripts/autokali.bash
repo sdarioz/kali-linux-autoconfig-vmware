@@ -240,7 +240,7 @@ function kali_hardening_basics() {
     rkhunter --update
     cp /etc/rkhunter.conf /etc/rkhunter.conf.local
     filename="/etc/rkhunter.conf.local"
-    echo 'MAILON_WARNING="deepmuscle@proton.me"' >>$filename
+    echo 'MAILON_WARNING="test@test.com"' >>$filename
     echo 'MAIL_CMD=mail' >>$filename
 
     printf "${col_yellow}Creating cron job script...${col_reset}\n"

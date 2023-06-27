@@ -195,7 +195,7 @@ function advanced_security_hardening() {
     # Configure logwatch
 
     # Set the email address to send the logwatch report to
-    echo "MailTo = deepmuscle@proton.me" > /etc/logwatch/conf/logwatch.conf
+    echo "MailTo = your@email.com" > /etc/logwatch/conf/logwatch.conf
 
     # Set the email address to send the logwatch report from
     echo "MailFrom = Logwatch" >> /etc/logwatch/conf/logwatch.conf
@@ -255,7 +255,7 @@ sudo rkhunter --update -y
 sudo rkhunter -c --enable all --rwo > /tmp/rkhunter.log
 
 # Send the results
-cat /tmp/rkhunter.log | mail -s "Informe de escaneo Rkhunter $(date +%Y-%m-%d)" deepmuscle@proton.me
+cat /tmp/rkhunter.log | mail -s "Informe de escaneo Rkhunter $(date +%Y-%m-%d)" your@email.com
 EOF
 
     # Make the script executable

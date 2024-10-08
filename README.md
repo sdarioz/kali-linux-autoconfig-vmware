@@ -31,7 +31,7 @@
 1. Clone this repository to your Kali Linux VM:
 
    ```
-   git clone https://github.com/yourusername/kali-linux-autoconfig-vmware.git
+   git clone https://github.com/sdarioz/kali-linux-autoconfig-vmware.git
    ```
 
 2. Change to the `scripts` directory:
